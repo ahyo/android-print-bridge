@@ -14,3 +14,5 @@ captures/
 # SDK Epson ePOS2 harus diunduh sendiri dari Epson (lihat README) —
 # lisensinya tidak mengizinkan redistribusi lewat repo publik.
 app/libs/*.aar
+app/libs/*.jar
+app/src/main/jniLibs/

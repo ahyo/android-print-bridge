@@ -72,9 +72,13 @@ web — diatur sekali di aplikasi ini.
 Lisensi Epson tidak mengizinkan menaruh SDK di repo publik, jadi:
 
 1. Unduh **Epson ePOS SDK for Android** dari
-   https://download.epson-biz.com/modules/pos/ (pilih ePOS SDK → Android).
-2. Ekstrak, ambil `ePOS2.aar` (folder `libs` di paket SDK).
-3. Letakkan di `app/libs/ePOS2.aar`.
+   https://download.epson-biz.com/modules/pos/ (pilih ePOS SDK → Android;
+   yang benar bernama `ePOS_SDK_Android_vX.Y.Z.zip` — BUKAN paket
+   JavaScript, itu untuk browser).
+2. Ekstrak, lalu salin dari paket SDK ke proyek ini:
+   - `ePOS2.jar` → `app/libs/ePOS2.jar`
+   - folder ABI `arm64-v8a/`, `armeabi-v7a/`, `x86/`, `x86_64/` (isi
+     `libepos2.so` dkk.) → `app/src/main/jniLibs/<abi>/`
 
 ## Build
 

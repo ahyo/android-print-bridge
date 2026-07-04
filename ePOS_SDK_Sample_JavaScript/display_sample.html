@@ -1,0 +1,1863 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Customer Display Sample Program</title>
+<!-- CSS -->
+<style type="text/css">
+body {
+	background-color: #ffffff;
+	color: #333333;
+}
+table, tr, td {
+	border: 1px solid #666666;
+	border-collapse: collapse;
+	color: #333333;
+	background-color: #eeeeee;
+}
+th {
+	border: 1px solid #666666;
+	border-collapse: collapse;
+	color: #333333;
+	background-color: #cccccc;
+}
+.center {
+	text-align: center;
+}
+</style>
+<!-- Script -->
+<script type="text/javascript" src="epos-2.27.0.js"></script>
+<script type="text/javascript">
+<!--
+	var ipAddress = null;
+	var port      = null;
+
+	var crypto = false;
+	var buffer = false;
+
+	var display = null;
+
+	var sample = '';
+
+	var ePosDev = new epson.ePOSDevice();
+
+	function connect() {
+		ipAddress = document.getElementById("ipaddress").value;
+		port = document.getElementById("port").value;
+
+		ePosDev.connect(ipAddress, port, Callback_connect);
+		ePosDev.onreconnecting = OnReconnecting;
+		ePosDev.onreconnect = OnReconnect;
+		ePosDev.ondisconnect = OnDisconnect;
+	}
+
+	function Callback_connect(data) {
+		var deviceID = document.getElementById("deviceid").value;
+		crypto       = document.getElementById("crypto").checked;
+		buffer       = document.getElementById("buffer").checked;
+		var options  = {'crypto' : crypto, 'buffer' : buffer};
+
+		if(data == 'OK') {
+			consolelog("connected to ePOS Device Service Interface.", false);
+			ePosDev.createDevice(deviceID, ePosDev.DEVICE_TYPE_DISPLAY, options, callbackCreateDevice_display);
+		}
+		else if (data == 'SSL_CONNECT_OK') {
+			consolelog("connected to ePOS Device Service Interface with SSL.", false);
+			ePosDev.createDevice(deviceID, ePosDev.DEVICE_TYPE_DISPLAY, options, callbackCreateDevice_display);
+		}
+		else {
+			consolelog("connected to ePOS Device Service Interface is failed. [" + data + "]", false);
+		}
+	}
+
+	function callbackCreateDevice_display(data, code) {
+		if( data != null ) {
+			display = data;
+			consolelog("you can use display.");
+			display.onreceive = function (res) {
+				consolelog("success: " + res.success, false);
+				consolelog("code: " + res.code);
+			};
+		}
+		else {
+
+			consolelog(code);
+		}
+	}
+
+	function OnReconnecting() {
+		consolelog('onreconnecting');
+	}
+
+	function OnReconnect() {
+		consolelog('onreconnect');
+	}
+
+	function OnDisconnect() {
+		consolelog('ondisconnect');
+	}
+
+	function consolelog(string, option) {
+		var length = arguments.length;
+		var overwrite = length > 1 ? option : false;
+		
+		if (overwrite) {
+			document.getElementById("console").value = string + "\r\n";
+		} else {
+			document.getElementById("console").value += string + "\r\n";
+		}
+		//document.getElementById('console').scrollTop = document.getElementById('console').scrollHeight;
+	}
+
+	// Add window settings to the instruction buffer
+	function createWindow() {
+		try {
+			var number = document.getElementById('windownumber').value;
+			var x = document.getElementById('windowX').value;
+			var y = document.getElementById('windowY').value;
+			var width = document.getElementById('width').value;
+			var height = document.getElementById('height').value;
+			var scrollmode = document.getElementById('scroll').value;
+			display.createWindow(number, x, y, width, height, display[scrollmode]);
+			sample += "display.createWindow(" + number + ", " + x + ", " + y + ", " + width + ", " + height + ", display." + scrollmode + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add discard setting of defined window in the instruction buffer
+	function destroyWindow() {
+		try {
+			var number = document.getElementById('destroynumber').value;
+			display.destroyWindow(number);
+			sample += "display.destroyWindow(" + number + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add the target window No. to move in the instruction buffer
+	function setCurrentWindow() {
+		try {
+			var number = document.getElementById('setcurrentnumber').value;
+			display.setCurrentWindow(number);
+			sample += "display.setCurrentWindow(" + number + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+	// Add erasing contents in the current window in the instruction buffer
+	function clearWindow() {
+		try {
+			display.clearWindow();
+			sample += "display.clearWindow();\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add cursor position setting in the instruction buffer
+	function setCursorPosition() {
+		try {
+			var x = document.getElementById('cursorX').value;
+			var y = document.getElementById('cursorY').value;
+			display.setCursorPosition(x, y);
+			sample += "display.setCursorPosition(" + x + ", " + y + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add Cursor position setting in the current window in the instruction buffer
+	function moveCursorPosition() {
+		try {
+			var position = document.getElementById('movecursor').value;
+			display.moveCursorPosition(display[position]);
+			sample += "display.moveCursorPosition(display." + position + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add cursor setting in the instruction buffer
+	function setCursorType() {
+		try {
+			var type = document.getElementById('cursortype').value;
+			display.setCursorType(display[type]);
+			sample += "display.setCursorType(display." + type + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add text in the instruction buffer
+	function addText() {
+		try {
+			var data = document.getElementById('text').value;
+			var lang = document.getElementById('lang').value;
+			if(lang == "") {
+				lang = undefined;
+			}
+			var x = document.getElementById('textX').value;
+			if(x == "") {
+				x = undefined;
+			}
+			var y = document.getElementById('textY').value;
+			if(y == "") {
+				y = undefined;
+			}
+			var r = document.getElementById('textR').value;
+			if(r == "") {
+				r = undefined;
+			}
+			var g = document.getElementById('textG').value;
+			if(g == "") {
+				g = undefined;
+			}
+			var b = document.getElementById('textB').value;
+			if(b == "") {
+				b = undefined;
+			}
+			display.addText(data, x, y, lang, r, g, b);
+			sample += "display.addText('" + data + "', " + x + ", " + y + ", '" + lang + ", '" + r + ", '" + g + ", '" + b + "');\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add reversal-displayed text in the instruction buffer
+	function addReverseText() {
+		try {
+			var data = document.getElementById('rtext').value;
+			var lang = document.getElementById('rlang').value;
+			var x = document.getElementById('rtextX').value;
+			var y = document.getElementById('rtextY').value;
+			if (lang == "null" && x == "null" && y == "null") {
+				display.addReverseText(data);
+				sample += "display.addReverseText('" + data + "');\n";
+				updateSampleCode();
+			}
+			else if (lang != "null" && x == "null" && y == "null") {
+				display.addReverseText(data, lang);
+				sample += "display.addReverseText('" + data + "', '" + lang + "');\n";
+				updateSampleCode();
+			}
+			else if (lang == "null" && (x != "null" || y != "null")) {
+				if (x == "null") {
+					x = 1;
+				}
+				else if (y == "null") {
+					y = 1;
+				}
+				display.addReverseText(data, x, y);
+				sample += "display.addReverseText('" + data + "', " + x + ", " + y + ");\n";
+				updateSampleCode();
+			}
+			else {
+				if (x == "null") {
+					x = 1;
+				}
+				else if (y == "null") {
+					y = 1;
+				}
+				display.addReverseText(data, x, y, lang);
+				sample += "display.addReverseText('" + data + "', " + x + ", " + y + ", '" + lang + "');\n";
+				updateSampleCode();
+			}
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add marquee display in the instruction buffer
+	function addMarquee() {
+		try {
+			var data = document.getElementById('marquee').value;
+			var format = document.getElementById('format').value;
+			var unitWait = document.getElementById('unitwait').value;
+			var repeatWait = document.getElementById('repeatwait').value;
+			var repeat = document.getElementById('repeat').value;
+			var lang = document.getElementById('mlang').value;
+			if (lang == "null") {
+				display.addMarquee(data, display[format], unitWait, repeatWait, repeat);
+				sample += "display.addMarquee('" + data + "', display." + format + ", " + unitWait + ", " + repeatWait + ", " + repeat + ");\n";
+				updateSampleCode();
+			}
+			else {
+				display.addMarquee(data, display[format], unitWait, repeatWait, repeat, lang);
+				sample += "display.addMarquee('" + data + "', display." + format + ", " + unitWait + ", " + repeatWait + ", " + repeat + ", '" + lang + "');\n";
+				updateSampleCode();
+			}
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add the blinking display setting in the instruction buffer
+	function setBlink() {
+		try {
+			var interval = document.getElementById('interval').value;
+			display.setBlink(interval);
+			sample += "display.setBlink(" + interval + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add the brightness setting of the display in the instruction buffer
+	function setBrightness() {
+		try {
+			var brightness = document.getElementById('brightness').value;
+			display.setBrightness(display[brightness]);
+			sample += "display.setBrightness(display." + brightness + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add clock display in the instruction buffer
+	function showClock() {
+		try {
+			display.showClock();
+			sample += "display.showClock();\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add commands in the instruction buffer
+	function addCommand() {
+		try {
+			var data = document.getElementById('command').value;
+			display.addCommand(escapeCode(data));
+			sample += "display.addCommand('" + escapeCodeSample(data) + "');\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add display mode specification in the instruction buffer
+	function addCreateScreen() {
+		try {
+			var mode = document.getElementById('mode').value;
+			display.addCreateScreen(display[mode]);
+			sample += "display.addCreateScreen(display." + mode + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add display mode specification in the instruction buffer
+	function addCreateScreenCustom() {
+		try {
+			var modeCustom = document.getElementById('modeCustom').value;
+			var modeColumn = document.getElementById('modeColumn').value;
+			var modeRow = document.getElementById('modeRow').value;
+			display.addCreateScreenCustom(display[modeCustom], modeColumn, modeRow);
+			sample += "display.addCreateScreenCustom(display." + modeCustom + ", " + modeColumn + ", " + modeRow + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add background color in the instruction buffer
+	function addBackgroundColor() {
+		try {
+			var backgroundColorRow = document.getElementById('backgroundColorRow').value;
+			var r = document.getElementById('backgroundColorR').value;
+			var g = document.getElementById('backgroundColorG').value;
+			var b = document.getElementById('backgroundColorB').value;
+			if(backgroundColorRow.indexOf('_ROWS') !== -1) {
+				display.addBackgroundColor(display[backgroundColorRow], r, g, b);
+			} else {
+				display.addBackgroundColor(backgroundColorRow, r, g, b);
+			}
+			sample += "display.addBackgroundColor(display." + backgroundColorRow + ", " + r + ", " + g + ", " + b + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add slide show start in the instruction buffer
+	function addStartSlideShow() {
+		try {
+			var interval = document.getElementById('slideshowInterval').value;
+			display.addStartSlideShow(interval);
+			sample += "display.addStartSlideShow(" + interval+ ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add slide show end in the instruction buffer
+	function addStoptSlideShow() {
+		try {
+			display.addStopSlideShow();
+			sample += "display.addStoptSlideShow();\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Adds two-dimensional symbol in the instruction buffer
+	function addSymbol() {
+		try {
+			var data = document.getElementById('symdata').value;
+			var type = document.getElementById('symtype').value;
+
+			var level  = document.getElementById('symleveldefine').value;
+			var width  = document.getElementById('symwidth').value;
+			var height = document.getElementById('symheight').value;
+			var dotX   = document.getElementById('symDotX').value;
+			var dotY   = document.getElementById('symDotY').value;
+			var quietZone = document.getElementById('symQuietZone').value;
+
+			var selectTypelist = document.getElementsByName("symlevelselect");
+
+			display.addSymbol(escapeCode(data), display[type], display[level], width, height, dotX, dotY, quietZone);
+			sample += "display.addSymbol(" + escapeCodeSample(data) + "', display." + type + ", " + level + ", " + width + ", " + height + ", " + dotX + ", " + dotY + ", " + quietZone + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+
+	}
+
+	// Add download graphic registration command in the instruction buffer
+	function addRegisterDownloadImage() {
+		try {
+			var imageUrl = "./" + document.getElementById('image').value;
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', imageUrl, true);
+			xhr.responseType = "arraybuffer";
+			xhr.onload = function() {
+				var bytes = new Uint8Array(this.response);
+				var binaryData = "";
+				var i = 0;
+				for(len = bytes.byteLength; i<len; i++) {
+					binaryData += String.fromCharCode(bytes[i]);
+				}
+				var key1 = document.getElementById('registerDownloadImageKey1').value;
+				var key2 = document.getElementById('registerDownloadImageKey2').value;
+				display.addRegisterDownloadImage(binaryData, key1, key2);
+				sample += "display.addDownloadImage(binaryData, " + key1 + ", " + key2 + ");\n";
+				updateSampleCode();
+			};
+			xhr.send();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+
+	// Add download graphic display command in the instruction buffer
+	function addDownloadImage() {
+		try {
+			var key1 = document.getElementById('downloadImageKey1').value;
+			var key2 = document.getElementById('downloadImageKey2').value;
+			var dotX = document.getElementById('downloadImageDotX').value;
+			var dotY = document.getElementById('downloadImageDotY').value;
+			var width = document.getElementById('downloadImageWidth').value;
+			var height = document.getElementById('downloadImageHeight').value;
+			display.addDownloadImage(key1, key2, dotX, dotY, width, height);
+			sample += "display.addDownloadImage(" + key1 + ", " + key2 + ", "+ dotX + ", "+ dotY + ", "+ width + ", "+ height + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}	
+
+	// Add NV graphic display command in the instruction buffer
+	function addNVImage() {
+		try {
+			var key1 = document.getElementById('NVImageKey1').value;
+			var key2 = document.getElementById('NVImageKey2').value;
+			var dotX = document.getElementById('NVImageDotX').value;
+			var dotY = document.getElementById('NVImageDotY').value;
+			var width = document.getElementById('NVImageWidth').value;
+			var height = document.getElementById('NVImageHeight').value;
+			display.addNVImage(key1, key2, dotX, dotY, width, height);
+			sample += "display.addNVImage(" + key1 + ", " + key2 + ", "+ dotX + ", "+ dotY + ", "+ width + ", "+ height + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add graphic erase command in the instruction buffer
+	function addClearImage() {
+		try {
+			display.addClearImage();
+			sample += "display.addClearImage();\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add two-dimensional symbol erase command in the instruction buffer
+	function addClearSymbol() {
+		try {
+			display.addClearSymbol();
+			sample += "display.addClearSymbol();\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add window settings to the instruction buffer
+	function createTextArea() {
+		try {
+			var number = document.getElementById('TextAreanumber').value;
+			var x = document.getElementById('TextAreaX').value;
+			var y = document.getElementById('TextAreaY').value;
+			var width = document.getElementById('TextAreaWidth').value;
+			var height = document.getElementById('TextAreaHeight').value;
+			var scrollmode = document.getElementById('TextAreaScroll').value;
+			display.createTextArea(number, x, y, width, height, display[scrollmode]);
+			sample += "display.createTextArea(" + number + ", " + x + ", " + y + ", " + width + ", " + height + ", display." + scrollmode + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add discard setting of defined window in the instruction buffer
+	function destroyTextArea() {
+		try {
+			var number = document.getElementById('TextAreaDestroyNumber').value;
+			display.destroyTextArea(number);
+			sample += "display.destroyTextArea(" + number + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add the target window No. to move in the instruction buffer
+	function setCurrentTextArea() {
+		try {
+			var number = document.getElementById('TextAreaSetcurrentNumber').value;
+			display.setCurrentTextArea(number);
+			sample += "display.setCurrentTextArea(" + number + ");\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add erasing contents in the current window in the instruction buffer
+	function clearTextArea() {
+		try {
+			display.clearTextArea();
+			sample += "display.clearTextArea();\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// load image
+	function loadImage() {
+		try {
+			var image = new Image();
+			image.src = document.getElementById('image').value + '?' + new Date().getTime();
+			image.onload = function () {
+				// show message
+				consolelog('Image:Width' + image.width + 'px, Height' + image.height + 'px');
+				// draw image
+				var canvas = document.getElementById('canvas');
+				if (canvas.getContext) {
+					canvas.width = image.width;
+					canvas.height = image.height;
+					var context = canvas.getContext('2d');
+					context.drawImage(image, 0, 0);
+				}
+			}
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// Add initialization command for customer display to the instruction buffer
+	function resetWindow() {
+		try {
+			display.reset();
+			sample += "display.reset();\n";
+			updateSampleCode();
+		}
+		catch (e) {
+			consolelog(e.message,false);
+		}
+	}
+
+	// process escape sequence (binary)
+	function escapeCode(s) {
+		var escape = /\\x[0-9A-Fa-f]{2}/g;
+		if (escape.test(s)) {
+			s = s.replace(escape, function (c) {
+				return String.fromCharCode(parseInt(c.slice(2), 16));
+			});
+		}
+		return escapeText(s);
+	}
+
+	// process escape sequence (text)
+	function escapeText(s) {
+		var escape = /\\[tnr\\]|\\/g;
+		if (escape.test(s)) {
+			s = s.replace(escape, function (c) {
+				var r = '';
+				switch (c) {
+					case '\\t':
+						r = '\x09';
+						break;
+					case '\\n':
+						r = '\x0a';
+						break;
+					case '\\r':
+						r = '\x0d';
+						break;
+					case '\\\\':
+						r = '\\';
+						break;
+					default:
+						break;
+				}
+				return r;
+			});
+		}
+		return s;
+	}
+
+	// process escape sequence for sample code (binary)
+	function escapeCodeSample(s) {
+		var escape = /\\x[0-9A-Fa-f]{2}|\\[tnr\\]|['"]|\\/g;
+		if (escape.test(s)) {
+			s = s.replace(escape, function (c) {
+				var r = c;
+				switch (c) {
+					case '"':
+						r = '\\"';
+						break;
+					case "'":
+						r = "\\'";
+						break;
+					case '\\':
+						r = '';
+						break;
+					default:
+						break;
+				}
+				return r;
+			});
+		}
+		return s;
+	}
+
+	// process escape sequence for sample code (text)
+	function escapeTextSample(s) {
+		var escape = /['"]|\\/g;
+		if (escape.test(s)) {
+			s = s.replace(escape, function (c) {
+				var r = c;
+				switch (c) {
+					case '"':
+						r = '\\"';
+						break;
+					case "'":
+						r = "\\'";
+						break;
+					case '\\':
+						r = '\\\\';
+						break;
+					default:
+						break;
+				}
+				return r;
+			});
+		}
+		return s;
+	}
+
+	// update sample code
+	function updateSampleCode() {
+		var strCrypto = 'false';
+		if( crypto ) {
+			strCrypto = 'true';
+		}
+
+		var strBuffer = 'false';
+		if( buffer ) {
+			strBuffer = 'true';
+		}
+
+		document.getElementById('sample').value = 
+			"var display = null;\n" +
+			"var ePosDev = new epson.ePOSDevice();\n" + 
+			"ePosDev.connect('" + ipAddress + "', " + port + ", cbConnect);\n" + 
+			"function cbConnect(data) {\n" +
+			"	if(data == 'OK') {\n" +
+			"		ePosDev.createDevice('local_display', ePosDev.DEVICE_TYPE_DISPLAY, {'crypto' : " + strCrypto + ", 'buffer' : " + strBuffer +"}, cbCreateDevice_display);\n" +
+			"	} else {\n" +
+			"		console.log(data);\n" +
+			"	}\n" +
+			"}\n" +
+			"function cbCreateDevice_display(devobj, retcode) {\n" +
+			"	if( retcode == 'OK' ) {\n" +
+			"		display = devobj;\n" +
+			"		executeAddedCode();\n" +
+			"	} else {\n" +
+			"		console.log(retcode);\n" +
+			"	}\n" +
+			"}\n" +
+			"function executeAddedCode() {\n\n" +
+			sample + "\n" +
+			"display.send();\n" +
+			"}\n";
+
+		document.getElementById('sample').scrollTop = document.getElementById('sample').scrollHeight;
+	}
+
+	// Clear message
+	function resetMessage() {
+		display.message = '';
+		sample = '';
+	}
+
+	// Execute instruction
+	function sendMessage() {
+		var temp = display.message;
+		// send
+		display.send();
+		display.message = temp;
+	}
+	
+//-->
+</script>
+</head>
+
+<body onload="consolelog('', true)">
+<form action="" onsubmit="return false;">
+<table style="width:100%;">
+	<thead>
+		<tr>
+			<th colspan="3">Device Setting</th>
+		</tr>
+	</thead>
+	<tbody>
+
+		<tr>
+			<td style="width:10%;">Connection settings</td>
+			<td style="width:80%;">
+				IP address<input id="ipaddress" size="20" type="text" value="192.168.192.168" />
+				Port<input id="port" size="5" type="text" value="8008" />
+				Device ID<input id="deviceid" size="15" type="text" value="local_display" />
+				<input id="crypto" type="checkbox" value="" />Encryption
+				<input id="buffer" type="checkbox" value="" />Enable buffer
+			</td>
+			<td style="width:10%;" class="center"><input type="button" value="Connect" onclick="connect()" /></td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<br />
+<form action="" onsubmit="return false;">
+<table style="width:100%;">
+	<thead>
+		<tr>
+			<th>Console</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><textarea id="console" style="width:98%;" rows="15" cols="80"></textarea></td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<br />
+<form action="" onsubmit="return false;">
+<table style="width:100%;">
+	<thead>
+		<tr>
+			<th colspan="4">ePOS SDK Display Object</th>
+		</tr>
+	</thead>
+	<tbody>
+
+		<!-- createWindow -->
+		<tr>
+			<td rowspan="4" style="width:8%;">Window(createWindow)</td>
+			<td style="width:16%;">Define display area</td>
+			<td style="width:68%;">
+				Window No.
+				<select id="windownumber">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+				X-coordinate
+				<select id="windowX">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+				</select>
+				Y-coordinate
+				<select id="windowY">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+				Width
+				<select id="width">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10" selected="selected">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+				</select>
+				Height
+				<select id="height">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+				Scroll Mode
+				<select id="scroll">
+					<option value="SCROLL_OVERWRITE">OVERWRITE</option>
+					<option value="SCROLL_VERTICAL">VERTICAL</option>
+					<option value="SCROLL_HORIZONTAL">HORIZONTAL</option>
+				</select>
+			</td>
+			<td style="width:8%;" class="center"><input type="button" value="Add" onclick="createWindow()" /></td>
+		</tr>
+
+		<!-- destroyWindow -->
+		<tr>
+			<td>Discard display area setting</td>
+			<td>
+				Window No. to discard
+				<select id="destroynumber">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="destroyWindow()" /></td>
+		</tr>
+
+		<!-- setCurrentWindow -->
+		<tr>
+			<td>Switch display area</td>
+			<td>
+				Window No. to move
+				<select id="setcurrentnumber">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="setCurrentWindow()" /></td>
+		</tr>
+
+		<!-- clearWindow -->
+		<tr>
+			<td>Clear current display area</td>
+			<td></td>
+			<td class="center"><input type="button" value="Add" onclick="clearWindow()" /></td>
+		</tr>
+
+		<!-- setCursorPosition -->
+		<tr>
+			<td rowspan="3">Cursor</td>
+			<td>Set cursor position</td>
+			<td>
+				X-coodinate
+				<select id="cursorX">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+				</select>
+				Y-coodinate
+				<select id="cursorY">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="setCursorPosition()" /></td>
+		</tr>
+
+		<!-- moveCursorPosition -->
+		<tr>
+			<td>Move cursor position in current window</td>
+			<td>
+				<select id="movecursor">
+					<option value="MOVE_TOP_LEFT">Top left</option>
+					<option value="MOVE_TOP_RIGHT">Top right</option>
+					<option value="MOVE_BOTTOM_LEFT">Bottom left</option>
+					<option value="MOVE_BOTTOM_RIGHT">Bottom right</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="moveCursorPosition()" /></td>
+		</tr>
+
+		<!-- setCursorType -->
+		<tr>
+			<td>Cursor Type</td>
+			<td>
+				<select id="cursortype">
+					<option value="CURSOR_NONE">No cursor</option>
+					<option value="CURSOR_UNDERLINE">Underline</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="setCursorType()" /></td>
+		</tr>
+
+		<!-- addText -->
+		<tr>
+			<td rowspan="3">Text</td>
+			<td>Display text</td>
+			<td>
+				String
+				<input id="text" style="width:98%;" type="text" value="Hello World!" /><br />
+				Language
+				<select id="lang">
+					<option value="">None</option>
+					<option value="en">English</option>
+					<option value="ja">Japanese</option>
+					<option value="mul">Multi</option>
+				</select>
+				X-coordinate
+				<select id="textX">
+					<option value="">None</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+				</select>
+				Y-coordinate
+				<select id="textY">
+					<option value="">None</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+				R
+				<input id="textR" type="text" size="5" value="" />
+				G
+				<input id="textG" type="text" size="5" value="" />
+				B
+				<input id="textB" type="text" size="5" value="" />
+			</td>	
+			<td class="center"><input type="button" value="Add" onclick="addText()" /></td>
+		</tr>
+
+		<!-- addReverseText -->
+		<tr>
+			<td>Display inverted text</td>
+			<td>
+				String
+				<input id="rtext" style="width:98%;" type="text" value="Hello World!" /><br />
+				Language
+				<select id="rlang">
+					<option value="null">None</option>
+					<option value="en">English</option>
+					<option value="ja">Japanese</option>
+				</select>
+				X-coordinate
+				<select id="rtextX">
+					<option value="null">None</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+				</select>
+				Y-coordinate
+				<select id="rtextY">
+					<option value="null">None</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+				</select>
+			</td>	
+			<td class="center"><input type="button" value="Add" onclick="addReverseText()" /></td>
+		</tr>
+
+		<!-- addMarquee -->
+		<tr>
+			<td>Display marquee</td>
+			<td>
+				String
+				<input id="marquee" style="width:98%;" type="text" value="Hello World!" /><br />
+				Format
+				<select id="format">
+					<option value="MARQUEE_WALK">Start from right-edge</option>
+					<option value="MARQUEE_PLACE">Start from left-edge</option>
+				</select>
+				Display interval(100～2,000)(ms)
+				<input id="unitwait" type="text" size="5" value="100" />
+				Repeat interval(100～2,000)(ms)
+				<input id="repeatwait" type="text" size="5" value="100" />
+				Repeat count(0～127)
+				<input id="repeat" type="text" size="5" value="0" />				
+				Language
+				<select id="mlang">
+					<option value="null">None</option>
+					<option value="en">English</option>
+					<option value="ja">Japanese</option>
+				</select>
+				
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addMarquee()" /></td>
+		</tr>
+
+		<!-- setBlink -->
+		<tr>
+			<td rowspan="2">Properties</td>
+			<td>Blinking display</td>
+			<td>
+				Blinking interval(0～12,700)(ms)
+				<input id="interval" type="text" size="5" value="0" />
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="setBlink()" /></td>
+		</tr>
+
+		<!-- setBrightness -->
+		<tr>
+			<td>Brightness</td>
+			<td>
+				<select id="brightness">
+					<option value="BRIGHTNESS_20">20%</option>
+					<option value="BRIGHTNESS_40">40%</option>
+					<option value="BRIGHTNESS_60">60%</option>
+					<option value="BRIGHTNESS_100">100%</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="setBrightness()" /></td>
+		</tr>
+
+		<!-- addCreateScreen -->
+		<tr>
+			<td rowspan="2">Screen</td>
+			<td>Mode</td>
+			<td>
+				<select id="mode">
+					<option value="LAYOUT_MODE_1">LAYOUT_MODE_1</option>
+					<option value="LAYOUT_MODE_2">LAYOUT_MODE_2</option>
+					<option value="LAYOUT_MODE_3">LAYOUT_MODE_3</option>
+					<option value="LAYOUT_MODE_4">LAYOUT_MODE_4</option>
+					<option value="LAYOUT_MODE_5">LAYOUT_MODE_5</option>
+					<option value="LAYOUT_MODE_6">LAYOUT_MODE_6</option>
+					<option value="LAYOUT_MODE_7">LAYOUT_MODE_7</option>
+					<option value="LAYOUT_MODE_8">LAYOUT_MODE_8</option>
+					<option value="LAYOUT_MODE_9">LAYOUT_MODE_9</option>
+					<option value="LAYOUT_MODE_10">LAYOUT_MODE_10</option>
+					<option value="LAYOUT_MODE_11">LAYOUT_MODE_11</option>
+					<option value="LAYOUT_MODE_12">LAYOUT_MODE_12</option>
+					<option value="LAYOUT_MODE_13">LAYOUT_MODE_13</option>
+					<option value="LAYOUT_MODE_14">LAYOUT_MODE_14</option>
+					<option value="LAYOUT_MODE_15">LAYOUT_MODE_15</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addCreateScreen()" /></td>	
+		</tr>
+
+		<!-- addCreateScreenCustom -->
+		<tr>
+			<td>Custom mode</td>
+			<td style="width:68%;">
+				<select id="modeCustom">
+					<option value="LANDSCAPE_LAYOUT_MODE_1">LANDSCAPE_LAYOUT_MODE_1</option>
+					<option value="LANDSCAPE_LAYOUT_MODE_2">LANDSCAPE_LAYOUT_MODE_2</option>
+					<option value="LANDSCAPE_LAYOUT_MODE_3">LANDSCAPE_LAYOUT_MODE_3</option>
+					<option value="LANDSCAPE_LAYOUT_MODE_4">LANDSCAPE_LAYOUT_MODE_4</option>
+					<option value="LANDSCAPE_LAYOUT_MODE_5">LANDSCAPE_LAYOUT_MODE_5</option>
+					<option value="PORTRAIT_LAYOUT_MODE_1">PORTRAIT_LAYOUT_MODE_1</option>
+					<option value="PORTRAIT_LAYOUT_MODE_2">PORTRAIT_LAYOUT_MODE_2</option>
+					<option value="PORTRAIT_LAYOUT_MODE_3">PORTRAIT_LAYOUT_MODE_3</option>
+					<option value="PORTRAIT_LAYOUT_MODE_4">PORTRAIT_LAYOUT_MODE_4</option>
+					<option value="PORTRAIT_LAYOUT_MODE_5">PORTRAIT_LAYOUT_MODE_5</option>
+					<option value="PORTRAIT_LAYOUT_MODE_6">PORTRAIT_LAYOUT_MODE_6</option>
+					<option value="PORTRAIT_LAYOUT_MODE_7">PORTRAIT_LAYOUT_MODE_7</option>
+				</select>
+				Column
+				<select id="modeColumn">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20" selected="selected">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+				</select>
+				Row
+				<select id="modeRow">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5" selected="selected">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+			<td class="center"><input type="button" value="Add" onclick="addCreateScreenCustom()" /></td>
+		</tr>
+
+		<!-- addBackgroundColor -->
+		<tr>
+			<td rowspan="1">Background Color</td>
+			<td>Detail settings</td>
+			<td>
+				Row
+				<select id="backgroundColorRow">
+					<option value="EVEN_ROWS">EVEN_ROWS</option>
+					<option value="ODD_ROWS">ODD_ROWS</option>
+					<option value="ALL_ROWS">ALL_ROWS</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+				<br>
+				R
+				<input id="backgroundColorR" type="text" size="5" value="100" />
+				G
+				<input id="backgroundColorG" type="text" size="5" value="100" />
+				B
+				<input id="backgroundColorB" type="text" size="5" value="100" />
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addBackgroundColor()" /></td>	
+		</tr>
+
+		<!-- addStartSlideShow / addStopSlideShow -->
+		<tr>
+			<td rowspan="2">Slideshow</td>
+			<td>Start</td>
+			<td>
+				Interval
+				<input id="slideshowInterval" type="text" size="5" value="1000" />
+			</td>	
+			<td class="center"><input type="button" value="Add" onclick="addStartSlideShow()" />	
+		</tr>
+		<tr>
+			<td>Stop</td>
+			<td></td>
+				<td class="center"><input type="button" value="Add" onclick="addStoptSlideShow()" />
+		</tr>
+
+		<!-- addSymbol -->
+		<tr>
+			<td rowspan="2">Bar Code</td>
+			<td>Symbol</td>
+			<td>
+				Data
+				<input id="symdata" type="text" size="20" value="ABCDE" />
+				Type
+				<select id="symtype">
+					<option value="SYMBOL_QRCODE_MODEL_1">QR Code Model 1</option>
+					<option value="SYMBOL_QRCODE_MODEL_2"">QR Code Model 2</option>	
+				</select>
+				<br />
+				Error Correction Level
+				<select id="symleveldefine">
+					<option value="LEVEL_L">QR Code Level L</option>
+					<option value="LEVEL_M">QR Code Level M</option>
+					<option value="LEVEL_Q">QR Code Level W</option>
+					<option value="LEVEL_H">QR Code Level H</option>
+					<option value="LEVEL_DEFAULT">Default Level</option>
+				</select>
+				Module Width
+				<input id="symwidth" type="text" size="5" value="3" />
+				Module Height
+				<input id="symheight" type="text" size="5" value="0" />
+				DotX
+				<input id="symDotX" type="text" size="5" value="3" />
+				DotY
+				<input id="symDotY" type="text" size="5" value="0" />
+				QuietZone
+				<select id="symQuietZone">
+					<option value="true">true</option>
+					<option value="false">false</option>
+				</select>
+				<br>
+				Hexadecimal: '\x00'～'\xff', Horizontal Tab(HT): '\t', Line Feed(LF): '\n', Carriage Return(CR): '\r', Back Slash: '\\'
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addSymbol()" /></td>
+		</tr>
+
+		<!-- addClearSymbol -->
+		<tr>
+			<td>Clear Symbol</td>
+			<td></td>
+			<td class="center"><input type="button" value="Add" onclick="addClearSymbol()" /></td>
+		</tr>
+
+		<!-- addRegisterDownloadImage -->
+		<tr>
+			<td rowspan="4">Image</td>
+			<td>Register Download Image</td>
+			<td>
+				Image File (in the same server)
+				<input id="image" type="text" size="20" value="code39-08.PNG" />
+				<input type="button" value="表示" onclick="loadImage()" />
+				<br />
+				<canvas id="canvas" width="0" height="0"></canvas>
+				<br />
+
+				Keycode 1
+				<input id="registerDownloadImageKey1" type="text" size="5" value="48" />
+				Keycode 2
+				<input id="registerDownloadImageKey2" type="text" size="5" value="48" />
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addRegisterDownloadImage()" /></td>
+		</tr>
+
+		<!-- addDownloadImage -->
+		<tr>
+			<td>Display Download Image</td>
+			<td>
+				Keycode 1
+				<input id="downloadImageKey1" type="text" size="5" value="48" />
+				Keycode 2
+				<input id="downloadImageKey2" type="text" size="5" value="48" />
+				DotX
+				<input id="downloadImageDotX" type="text" size="5" value="0" />
+				DotY
+				<input id="downloadImageDotY" type="text" size="5" value="0" />
+				Width
+				<input id="downloadImageWidth" type="text" size="5" value="0" />
+				Height
+				<input id="downloadImageHeight" type="text" size="5" value="0" />
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addDownloadImage()" /></td>
+		</tr>
+
+		<!-- addNVImage -->
+		<tr>
+			<td>Display NV Image</td>
+			<td>
+				Keycode 1
+				<input id="NVImageKey1" type="text" size="5" value="48" />
+				Keycode 2
+				<input id="NVImageKey2" type="text" size="5" value="48" />
+				DotX
+				<input id="NVImageDotX" type="text" size="5" value="0" />
+				DotY
+				<input id="NVImageDotY" type="text" size="5" value="0" />
+				Width
+				<input id="NVImageWidth" type="text" size="5" value="0" />
+				Height
+				<input id="NVImageHeight" type="text" size="5" value="0" />
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addNVImage()" /></td>
+		</tr>
+
+		<!-- addClearImage -->
+		<tr>
+			<td>Clear Image</td>
+			<td></td>
+			<td class="center"><input type="button" value="Add" onclick="addClearImage()" /></td>
+		</tr>
+
+		<!-- createTextArea -->
+		<tr>
+			<td rowspan="4" style="width:8%;">Window(createTextArea)</td>
+			<td style="width:16%;">	Define display area</td>
+			<td style="width:68%;">
+				Window No.
+				<select id="TextAreanumber">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+				X-coordinate
+				<select id="TextAreaX">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+				</select>
+				Y-coordinate
+				<select id="TextAreaY">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+				Width
+				<select id="TextAreaWidth">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10" selected="selected">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+				</select>Height
+				<select id="TextAreaHeight">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+				</select>
+				Scroll Mode
+				<select id="TextAreaScroll">
+					<option value="SCROLL_OVERWRITE">OVERWRITE</option>
+					<option value="SCROLL_VERTICAL">VERTICAL</option>
+					<option value="SCROLL_HORIZONTAL">HORIZONTAL</option>
+				</select>
+			</td>
+			<td style="width:8%;" class="center"><input type="button" value="Add" onclick="createTextArea()" /></td>
+		</tr>
+
+		<!-- destroyTextArea -->
+		<tr>
+			<td>Discard display area setting</td>
+			<td>
+				Window No. to discard
+				<select id="TextAreaDestroyNumber">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="destroyTextArea()" /></td>
+		</tr>
+
+		<!-- setCurrentTextArea -->
+		<tr>
+			<td>Switch display area</td>
+			<td>
+				Window No. to move
+				<select id="TextAreaSetcurrentNumber">
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+				</select>
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="setCurrentTextArea()" /></td>
+		</tr>
+
+		<!-- clearTextArea -->
+		<tr>
+			<td>Clear current display area</td>
+			<td></td>
+			<td class="center"><input type="button" value="Add" onclick="clearTextArea()" /></td>
+		</tr>
+
+		<!-- showClock -->
+		<tr>
+			<td rowspan="3">Others</td>
+			<td>Display clock</td>
+			<td></td>
+			<td class="center"><input type="button" value="Add" onclick="showClock()" /></td>
+		</tr>
+
+		<!-- addCommand -->
+		<tr>
+			<td>command</td>
+			<td>
+				<input id="command" style="width:98%;" type="text" value="12345" /><br />
+			</td>
+			<td class="center"><input type="button" value="Add" onclick="addCommand()" /></td>
+		</tr>
+
+		<!-- reset -->
+		<tr>
+			<td>Reset display</td>
+			<td></td>
+			<td class="center"><input type="button" value="Add" onclick="resetWindow()" /></td>
+		</tr>
+
+</tbody>
+</table>
+</form>
+
+<form action="" onsubmit="return false;">
+<table style="width:100%;">
+	<thead>
+		<tr>
+			<th colspan="2">Display Object Sample Code</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td style="width:92%;"><textarea id="sample" style="width:98%;" rows="10" cols="80" readonly="readonly"></textarea></td>
+			<td style="width:8%;" class="center"><input type="reset" value="Clear" onclick="resetMessage()" /></td>
+		</tr>
+		<tr>
+			<td style="width:10%;">Test display</td>
+			<td style="width:10%;" class="center"><input type="button" value="Send" onclick="sendMessage()" /></td>
+		</tr>
+	</tbody>
+</table>
+</form>
+</body>
+</html>

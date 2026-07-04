@@ -1,0 +1,757 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>CAT Sample Program</title>
+<!-- CSS -->
+<style type="text/css">
+body {
+	background-color: #ffffff;
+	color: #333333;
+}
+table, tr, td {
+	border: 1px solid #666666;
+	border-collapse: collapse;
+	color: #333333;
+	background-color: #eeeeee;
+}
+th {
+	border: 1px solid #666666;
+	border-collapse: collapse;
+	color: #333333;
+	background-color: #cccccc;
+}
+.center {
+	text-align: center;
+}
+</style>
+<!-- Script -->
+<script type="text/javascript" src="epos-2.27.0.js"></script>
+<script type="text/javascript">
+	var ePosDev = new epson.ePOSDevice();
+	
+	var cat = null;
+
+	function connect() {
+		var ipAddress = document.getElementById("ipaddress").value;
+		var port = document.getElementById("port").value;
+		
+		ePosDev.connect(ipAddress, port, Callback_connect);
+		
+		ePosDev.onreconnecting = OnReconnecting;
+		ePosDev.onreconnect = OnReconnect;
+		ePosDev.ondisconnect = OnDisconnect;
+		ePosDev.onerror = OnError;
+	}
+
+	function OnError(sq, deviceID, code) {
+		consolelog('sq: ' + sq, false);
+		consolelog('deviceID: ' + deviceID);
+		consolelog('code: ' + code);
+	}
+	function checkConnection() {
+
+		var asi_checkconnection = document.getElementById("check_connection_asi").value;
+		var sendbuffer = {"additionalSecurityInformation":asi_checkconnection};
+		try{
+			cat.checkConnection(sendbuffer);
+		}catch(e){
+
+		}
+	}
+
+	function clearOutput() {
+		try{
+			cat.clearOutput();
+		}catch(e){
+
+		}
+	}
+
+	function scanData() {
+		var selectTypelist = document.getElementsByName("training");
+		var selectType     = isCheckedRadioButtonValue(selectTypelist);
+		var training = false;
+		switch(selectType) {
+			case "enable":
+				training = true;
+				break;
+			case "disable":
+				training = false;
+				break;
+			default:
+				break;
+		}
+		var timeout = document.getElementById("timeout").value;
+		var command = document.getElementById("scandata_command").value;
+		var string = document.getElementById("scandata_string").value;
+
+		try {
+			cat.trainingMode = training;
+			cat.timeout = timeout;
+			var sendbuffer = {"command":command,"string":string};
+			cat.scanData(sendbuffer);
+		} catch(e){
+
+		}
+	}
+	
+	function authorizeSales() {
+		senddata("authorizeSales");
+	}
+	
+	function authorizeVoid() {
+		senddata("authorizeVoid");
+	}
+	
+	function authorizeRefund() {
+		senddata("authorizeRefund");
+	}
+	
+	function authorizeCompletion() {
+		senddata("authorizeCompletion");
+	}
+
+	function cashDeposit(method) {
+		var selectTypelist = document.getElementsByName("training");
+		var selectType     = isCheckedRadioButtonValue(selectTypelist);
+
+		var training = false;
+		switch(selectType) {
+			case "enable":
+				training = true;
+				break;
+			case "disable":
+				training = false;
+				break;
+			default:
+				break;
+		}
+
+		var timeout = document.getElementById("timeout").value;
+		var service = document.getElementById("service").value;
+		var sequence = document.getElementById("sequence").value;
+		var amount = document.getElementById("amount").value;
+		
+		var sendbuffer = {};
+		try{
+			cat.trainingMode = training;
+			cat.timeout = timeout;
+			sendbuffer = {"sequence":sequence,"service":service,"amount":amount};
+			cat.cashDeposit(sendbuffer);
+		}catch(e){
+		}
+	}
+	
+	function accessDailyLog() {
+		var selectTypelist = document.getElementsByName("training");
+		var selectType     = isCheckedRadioButtonValue(selectTypelist);
+
+		var training = false;
+		switch(selectType) {
+			case "enable":
+				training = true;
+				break;
+			case "disable":
+				training = false;
+				break;
+			default:
+				break;
+		}
+
+		var timeout = document.getElementById("timeout").value;
+		var service = document.getElementById("dailylog_service").value;
+		var sequence = document.getElementById("dailylog_sequence").value;
+		var dailylog_type = document.getElementById("dailylog_type").value;
+		var dailylog_asi = document.getElementById("dailylog_asi").value;
+		
+		try{
+			cat.trainingMode = training;
+			cat.timeout = timeout;
+			var sendbuffer = {"sequence":sequence,"service":service,"dailylogType":dailylog_type,"additionalSecurityInformation":dailylog_asi};
+			cat.accessDailyLog(sendbuffer);
+		}catch(e){}
+	}
+	
+	function sendDirectIOCommand() {
+		var selectTypelist = document.getElementsByName("training");
+		var selectType     = isCheckedRadioButtonValue(selectTypelist);
+
+		var training = false;
+		switch(selectType) {
+			case "enable":
+				training = true;
+				break;
+			case "disable":
+				training = false;
+				break;
+			default:
+				break;
+		}
+
+		var service = document.getElementById("command_service").value;
+		var command = document.getElementById("command_command").value;
+		var data = document.getElementById("command_data").value;
+		var string = document.getElementById("command_string").value;
+		var asiDirectIo = document.getElementById("command_asi").value;
+
+		try{
+			cat.trainingMode = training;
+			// ex) Check connection: command: 4, data: 0, string: ""
+			var sendbuffer = {"service":service,"command":command,"data":data,"string":string,"additionalSecurityInformation":asiDirectIo};
+			cat.sendCommand(sendbuffer);
+		}catch(e){}
+	}
+	
+	function senddata(method) {
+		var selectTypelist = document.getElementsByName("training");
+		var selectType     = isCheckedRadioButtonValue(selectTypelist);
+
+		var training = false;
+		switch(selectType) {
+			case "enable":
+				training = true;
+				break;
+			case "disable":
+				training = false;
+				break;
+			default:
+				break;
+		}
+
+		var timeout = document.getElementById("timeout").value;
+		var service = document.getElementById("service").value;
+		var sequence = document.getElementById("sequence").value;
+		var total_amount = document.getElementById("total_amount").value;
+		var amount = document.getElementById("amount").value;
+		var tax = document.getElementById("tax").value;
+		var asi_authorize = document.getElementById("asi_authorize").value;
+
+		
+		var sendbuffer = {};
+		try{
+			cat.trainingMode = training;
+			cat.timeout = timeout;
+			switch (method){
+				case "authorizeSales":
+					sendbuffer = {"sequence":sequence,"service":service,"totalAmount":total_amount,"amount":amount,"tax":tax,"additionalSecurityInformation":asi_authorize};
+					cat.authorizeSales(sendbuffer);
+					break;
+				case "authorizeVoid":
+					sendbuffer = {"sequence":sequence,"service":service,"totalAmount":total_amount,"amount":amount,"tax":tax,"additionalSecurityInformation":asi_authorize};
+					cat.authorizeVoid(sendbuffer);
+					break;
+				case "authorizeRefund":
+					sendbuffer = {"sequence":sequence,"service":service,"totalAmount":total_amount,"amount":amount,"tax":tax,"additionalSecurityInformation":asi_authorize};
+					cat.authorizeRefund(sendbuffer);
+					break;
+				case "authorizeCompletion":
+					sendbuffer = {"sequence":sequence,"service":service,"totalAmount":total_amount,"amount":amount,"tax":tax,"additionalSecurityInformation":asi_authorize};
+					cat.authorizeCompletion(sendbuffer);
+					break;
+				default:
+					break;
+			}
+		}catch(e){
+		}
+	}
+
+	function isCheckedRadioButtonValue(list) {
+
+		var ret = '';
+		for( var i=0; i<list.length; i++ ) {
+			if( list[i].checked ) {
+				ret = list[i].value;
+				break;
+			}
+		}
+
+		return ret;
+	}
+
+	function Callback_connect(data) {
+		var deviceID = document.getElementById("deviceid").value;
+		var crypto = document.getElementById("crypto").checked;
+		var buffer = document.getElementById("buffer").checked;
+		var options = {'crypto' : crypto, 'buffer' : buffer};
+
+		if (data == 'OK') {
+			consolelog("connected to ePOS Device Service Interface.", false);
+			ePosDev.createDevice(deviceID, ePosDev.DEVICE_TYPE_CAT, options, callbackCreateDevice_cat);
+		}
+		else if (data == 'SSL_CONNECT_OK') {
+			consolelog("connected to ePOS Device Service Interface with SSL.", false);
+			ePosDev.createDevice(deviceID, ePosDev.DEVICE_TYPE_CAT, options, callbackCreateDevice_cat);
+		}
+		else {
+			consolelog("connected to ePOS Device Service Interface is failed. [" + data + "]", false);
+		}
+	}
+
+	function callbackCreateDevice_cat(data, code) {
+		if (data != null) {
+			cat = data;
+			consolelog("you can use cat.");
+			cat.onauthorizesales = onauthorizesales;
+			cat.onauthorizevoid = onauthorizevoid;
+			cat.onclearoutput = onclearoutput;
+			cat.onauthorizerefund = onauthorizerefund;
+			cat.onauthorizecompletion = onauthorizecompletion;
+			cat.onaccessdailylog = onaccessdailylog;
+			cat.oncommandreply = oncommandreply;
+			cat.onstatusupdate = onstatusupdate;
+			cat.ondirectio = ondirectio;
+			cat.oncheckconnection = oncheckconnection;
+			cat.onscandata = onscandata;
+			cat.oncashdeposit = oncashdeposit;
+			
+		}
+		else {
+			consolelog(code);
+		}
+	}
+	function oncheckconnection(data) {
+		resultlog("oncheckconnection");
+		resultlog("  status: " + data.status);
+		resultlog("  additionalSecurityInformation: " + data.additional_security_information)
+		resultlog("");
+
+	}
+
+	function onscandata(data) {
+		resultlog("onscandata");
+		resultlog("  status: " + data.status);
+		resultlog("  additionalSecurityInformation: " + data.additional_security_information)
+		resultlog("");
+	}
+
+	function onauthorizesales(data) {
+		onauthorize("onauthorizesales",data);
+	}
+	
+	function onauthorizevoid(data) {
+		onauthorize("onauthorizevoid",data);
+	}
+	
+	function onauthorizerefund(data) {
+		onauthorize("onauthorizerefund",data);
+	}
+	
+	function onauthorizecompletion(data) {
+		onauthorize("onauthorizecompletion",data);
+	}
+	
+	function onauthorize(funcName,data) {
+		resultlog(funcName);
+		resultlog("  status: " + data.status);
+		resultlog("  sequence: " + data.sequence);
+		resultlog("  service: " + data.service);
+		resultlog("  accountNumber: " + data.accountNumber);
+		resultlog("  settledAmount: " + data.settledAmount);
+		resultlog("  slipNumber: " + data.slipNumber);
+		resultlog("  kid: " + data.kid);
+		resultlog("  approvalCode: " + data.approvalCode);
+		resultlog("  transactionNumber: " + data.transactionNumber);
+		resultlog("  paymentCondition: " + data.paymentCondition);
+		resultlog("  voidSlipNumber: " + data.voidSlipNumber);
+		resultlog("  balance: " + data.balance);
+		resultlog("  transactionType: " + data.transactionType);
+		resultlog("  additionalSecurityInformation: " + data.additionalSecurityInformation);
+		resultlog("");
+	}
+	function oncashdeposit(data) {
+		resultlog("oncashdeposit");
+		resultlog("  status: " + data.status);
+		resultlog("  sequence: " + data.sequence);
+		resultlog("  service: " + data.service);
+		resultlog("  accountNumber: " + data.accountNumber);
+		resultlog("  slipNumber: " + data.slipNumber);
+		resultlog("  paymentCondition: " + data.paymentCondition);
+		resultlog("  balance: " + data.balance);
+		resultlog("  additionalSecurityInformation: " + data.additionalSecurityInformation);
+		resultlog("");
+	}
+	function onclearoutput(data) {
+		resultlog("onclearoutput");
+		resultlog("  status: " + data.status);
+		resultlog("  code: " + data.code);
+		resultlog("");
+	}
+
+	function onaccessdailylog(data) {
+		resultlog("onaccessdailylog");
+		resultlog("  status: " + data.status);
+		resultlog("  sequence: " + data.sequence);
+		resultlog("  service: " + data.service);
+		data.dailyLog.forEach(function(log) {
+			resultlog("  dailyLog : \t");
+			resultlog("    kid: " + log.kid);
+			resultlog("    salesCount: " + log.salesCount);
+			resultlog("    salesAmount: " + log.salesAmount);
+			resultlog("    voidCount: " + log.voidCount);
+			resultlog("    voidAmount: " + log.voidAmount);
+		});
+		resultlog("");
+
+	}
+
+	function oncommandreply(data) {
+		resultlog("oncommandreply");
+		resultlog("  status: " + data.status);
+		resultlog("  sequence: " + data.sequence);
+		resultlog("  service: " + data.service);
+		resultlog("  command: " + data.command);
+		resultlog("  data: " + data.data);
+		resultlog("  string: " + data.string);
+		resultlog("  accountNumber: " + data.accountNumber);
+		resultlog("  settledAmount: " + data.settledAmount);
+		resultlog("  slipNumber: " + data.slipNumber);
+		resultlog("  transactionNumber: " + data.transactionNumber);
+		resultlog("  paymentCondition: " + data.paymentCondition);
+		resultlog("  balance: " + data.balance);
+		resultlog("  additionalSecurityInformation: " + data.additionalSecurityInformation);
+		resultlog("");
+	}
+
+	function onstatusupdate(data) {
+		resultlog("onstatusupdate");
+		resultlog("  status: " + getStatusText(cat, data.status));
+		resultlog("");
+	}
+	function ondirectio(data) {
+		resultlog("ondirectio");
+		resultlog("  eventnumber: " + data.eventnumber);
+		resultlog("  data: " + data.data);
+		resultlog("  string: " + data.string);
+		resultlog("");
+	}
+
+	function getStatusText(e, status) {
+		var s;
+		switch (status) {
+			case e.SUE_LOGSTATUS_OK:
+				s = "SUE_LOGSTATUS_OK";
+				break;
+			case e.SUE_LOGSTATUS_NEARFULL:
+				s = "SUE_LOGSTATUS_NEARFULL";
+				break;
+			case e.SUE_LOGSTATUS_FULL:
+				s = "SUE_LOGSTATUS_FULL";
+				break;
+			case e.SUE_POWER_ONLINE:
+				s = "SUE_POWER_ONLINE";
+				break;
+			case e.SUE_POWER_OFF_OFFLINE:
+				s = "SUE_POWER_OFF_OFFLINE";
+				break;
+			default:
+				s = status;
+				break;
+		}
+
+		return s;
+	}
+
+	function OnReconnecting() {
+		consolelog('onreconnecting');
+	}
+
+	function OnReconnect() {
+		consolelog('onreconnect');
+	}
+
+	function OnDisconnect() {
+		consolelog('ondisconnect');
+	}
+
+	function consolelog(string, option) {
+		var length = arguments.length;
+		var overwrite = length > 1 ? option : false;
+		if (overwrite) {
+			document.getElementById("console").value = string + "\r\n";
+		} else {
+			document.getElementById("console").value += string + "\r\n";
+		}
+	}
+	
+	function resultlog(string, option) {
+		var length = arguments.length;
+		var overwrite = length > 1 ? option : false;
+
+		if (overwrite) {
+			document.getElementById("result").value = string + "\r\n";
+		} else {
+			document.getElementById("result").value += string + "\r\n";
+		}
+	}
+	
+//-->
+</script>
+</head>
+
+<body onload="consolelog('', true);">
+<form action="" onsubmit="return false;">
+<table style="width:100%;">
+	<thead>
+		<tr>
+			<th colspan="3">Device Setting</th>
+		</tr>
+	</thead>
+	<tbody>
+
+		<tr>
+			<td style="width:10%;">Connection settings</td>
+			<td style="width:80%;">
+				IP address<input id="ipaddress" size="20" type="text" value="192.168.192.168" />
+				Port<input id="port" size="5" type="text" value="8008" />
+				Device ID<input id="deviceid" size="15" type="text" value="local_cat" />
+				<input id="crypto" type="checkbox" value="" />Encryption
+				<input id="buffer" type="checkbox" value="" />Enable buffer
+			</td>
+			<td style="width:10%;" class="center"><input type="button" value="Connect" onclick="connect()" /></td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<br />
+<form action="" onsubmit="return false;">
+<table style="width:100%;">
+	<thead>
+		<tr>
+			<th>Console</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<textarea id="console" style="width:98%;" rows="15" cols="80"></textarea>
+				<input type="button" value="Reset" onclick="consolelog('', true)" />
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<br />
+<form action="" onsubmit="return false;">
+<table style="width:100%;">
+	<thead>
+		<tr>
+			<th colspan="4">ePOS SDK CAT Object</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td rowspan="2" style="width:10%;">Property</td>
+			<td style="width:20%;">Training mode</td>
+			<td colspan="2" style="width:80%;">
+				<input type="radio" name="training" value="enable" >true
+				<input type="radio" name="training" value="disable" checked>false
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Timeout</td>
+			<td colspan="2" style="width:80%;">
+				<input id="timeout" type="text" size="10" value=''>msec
+			</td>
+		</tr>
+		<tr>
+			<td rowspan="6" style="width:8%;">Payment information</td>
+			<td style="width:20%;">Sequence number</td>
+			<td style="width:80%;">
+				<input id="sequence" type="text" size="10" value='1'>
+			</td>
+			<td rowspan="6" class="center">
+				<input type="button" value="Sales" onclick="authorizeSales()">
+				<input type="button" value="Void" onclick="authorizeVoid()">
+				<input type="button" value="ClearOutput" onclick="clearOutput()">				
+				<input type="button" value="Refund" onclick="authorizeRefund()">
+				<input type="button" value="Completion" onclick="authorizeCompletion()">
+				<input type="button" value="CashDeposit" onclick="cashDeposit()">
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Payment media</td>
+			<td style="width:80%;">
+				<select id="service">
+				<option value="credit">Credit</option>
+				<option value="debit">Debit</option>
+				<option value="unionpay">UnionPay</option>
+				<option value="nfcpayment">NFCPayment</option>				
+				<option value="edy">Edy</option>
+				<option value="id">iD</option>
+				<option value="nanaco">nanaco</option>
+				<option value="quicpay">QUICPay</option>
+				<option value="suica">Suica</option>
+				<option value="waon">WAON</option>
+				<option value="point">Point</option>
+				<option value="pitapa">PiTaPa</option>
+				<option value="fisc">FISC</option>			
+				<option value="qr">QR</option>
+				<option value="credit_debit">CreditDebit</option>
+				<option value="multi">Multi</option>	
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Total amount</td>
+			<td style="width:80%;">
+				<input id="total_amount" type="text" size="10" value='1000'>
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Amount</td>
+			<td style="width:80%;">
+				<input id="amount" type="text" size="10" value='1000'>
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Tax</td>
+			<td style="width:80%;">
+				<input id="tax" type="text" size="10" value='0'>
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">additionalSecurityInformation</td>
+			<td style="width:80%;">
+				<input id="asi_authorize" type="text" value='0,10,0,0' style="width:80%;">
+			</td>
+		</tr>
+		<tr>
+			<td rowspan="4">Daily cost</td>
+			<td style="width:20%;">Sequence number</td>
+			<td style="width:80%;">
+				<input id="dailylog_sequence" type="text" size="10" value='1'>
+			</td>
+			<td rowspan="4" class="center">
+				<input type="button" value="Daily log" onclick="accessDailyLog()">
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Payment media</td>
+			<td style="width:80%;">
+				<select id="dailylog_service">
+				<option value="credit">Credit</option>
+				<option value="debit">Debit</option>
+				<option value="unionpay">UnionPay</option>
+				<option value="nfcpayment">NFCPayment</option>	
+				<option value="edy">Edy</option>
+				<option value="id">iD</option>
+				<option value="nanaco">nanaco</option>
+				<option value="quicpay">QUICPay</option>
+				<option value="suica">Suica</option>
+				<option value="waon">WAON</option>
+				<option value="point">Point</option>
+				<option value="pitapa">PiTaPa</option>
+				<option value="fisc">FISC</option>	
+				<option value="qr">QR</option>
+				<option value="credit_debit">CreditDebit</option>
+				<option value="multi">Multi</option>	
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">daily log type</td>
+			<td style="width:80%;">
+				<input id="dailylog_type" type="text" value='reporting' style="width:80%;">
+			</td>
+		<tr>
+			<td style="width:20%;">additionalSecurityInformation</td>
+			<td style="width:80%;">
+				<input id="dailylog_asi" type="text" value='0' style="width:80%;">
+			</td>
+		<tr>
+			<td rowspan="5">DirectIO Command</td>
+			<td style="width:20%;">Payment media</td>
+			<td style="width:80%;">
+				<select id="command_service">
+					<option value="credit">Credit</option>
+					<option value="debit">Debit</option>
+					<option value="unionpay">UnionPay</option>
+					<option value="nfcpayment">NFCPayment</option>	
+					<option value="edy">Edy</option>
+					<option value="id">iD</option>
+					<option value="nanaco">nanaco</option>
+					<option value="quicpay">QUICPay</option>
+					<option value="suica">Suica</option>
+					<option value="waon">WAON</option>
+					<option value="point">Point</option>
+					<option value="fisc">FISC</option>
+					<option value="common">Common</option>
+					<option value="qr">QR</option>
+					<option value="credit_debit">CreditDebit</option>
+					<option value="multi">Multi</option>	
+					</td>
+			<td rowspan="5" class="center">
+				<input type="button" value="Send" onclick="sendDirectIOCommand()">
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Command</td>
+			<td style="width:80%;">
+				<input id="command_command" type="text" style="width:80%;">
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">Data</td>
+			<td style="width:80%;">
+				<input id="command_data" type="text" style="width:80%;">
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">String</td>
+			<td style="width:80%;">
+				<input id="command_string" type="text" style="width:80%;">
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">additionalSecurityInformation</td>
+			<td style="width:80%;">
+				<input id="command_asi" type="text" value='0' style="width:80%;">
+			</td>
+		<tr>
+		<tr>
+			<td rowspan="1" style="width:10%;">CheckConnection</td>
+			<td style="width:20%;">additionalSecurityInformation</td>
+			<td style="width:80%;">
+				<input id="check_connection_asi" type="text" value='0' style="width:80%;">
+			</td>
+			<td style="width:20%;" class="center">
+				<input type="button" value="CheckConnection" onclick="checkConnection()">
+			</td>
+		</tr>
+		<tr>
+			<td rowspan="2">ScanData</td>
+			<td style="width:20%;">Command</td>
+			<td style="width:80%;">
+				<input id="scandata_command" type="text" style="width:80%;">
+			</td>
+			<td rowspan="2" class="center">
+				<input type="button" value="ScanData" onclick="scanData()">
+			</td>
+		</tr>
+		<tr>
+			<td style="width:20%;">String</td>
+			<td style="width:80%;">
+				<input id="scandata_string" type="text" style="width:80%;">
+			</td>
+		</tr>
+	</tbody>
+</table>
+</form>
+<form action="" onsubmit="return false;">
+	<table style="width:100%;">
+		<thead>
+			<tr>
+				<th>Result</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					<textarea id="result" style="width:98%;" rows="30" cols="80"></textarea>
+					<input type="button" value="Reset" onclick="resultlog('', true)" />
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+</body>
+</html>

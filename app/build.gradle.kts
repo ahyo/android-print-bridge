@@ -31,9 +31,10 @@ android {
 }
 
 dependencies {
-    // SDK Epson ePOS2 — unduh dari portal Epson lalu letakkan di app/libs/ePOS2.aar
-    // (lihat README.md bagian "Menyiapkan SDK Epson").
-    implementation(files("libs/ePOS2.aar"))
+    // SDK Epson ePOS2 (paket "ePOS SDK for Android" v2.37): ePOS2.jar di
+    // app/libs/ + libepos2.so per-ABI di app/src/main/jniLibs/ — keduanya
+    // disalin dari paket unduhan Epson (lihat README.md).
+    implementation(files("libs/ePOS2.jar"))
 
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
