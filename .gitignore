@@ -1,0 +1,16 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.keystore
+!debug.keystore
+
+# SDK Epson ePOS2 harus diunduh sendiri dari Epson (lihat README) —
+# lisensinya tidak mengizinkan redistribusi lewat repo publik.
+app/libs/*.aar

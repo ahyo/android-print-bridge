@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PrintBridge" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#B8860B</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+    </style>
+
+    <!-- Untuk PrintActivity: tembus pandang, hanya menampilkan dialog progres,
+         supaya kasir terasa tetap di browser. -->
+    <style name="Theme.PrintBridge.Translucent">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

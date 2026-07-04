@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Siluet printer struk sederhana -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,28h32v10h-32z M32,42h44c3.3,0 6,2.7 6,6v14c0,3.3 -2.7,6 -6,6h-4v-8h-36v8h-4c-3.3,0 -6,-2.7 -6,-6v-14c0,-3.3 2.7,-6 6,-6z M40,64h28v16h-28z M44,70h20v2h-20z M44,75h14v2h-14z" />
+</vector>

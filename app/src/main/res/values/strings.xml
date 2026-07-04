@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Beesmillah Print Bridge</string>
+    <string name="printing">Mencetak…</string>
+    <string name="no_printer">Printer belum diatur. Buka aplikasi Beesmillah Print Bridge untuk memilih printer.</string>
+    <string name="saved_printer">Printer tersimpan</string>
+    <string name="none">(belum ada)</string>
+    <string name="search_printer">Cari Printer</string>
+    <string name="stop_search">Berhenti Mencari</string>
+    <string name="test_print">Tes Cetak</string>
+    <string name="manual_target_hint">Target manual, mis. TCP:192.168.1.55 atau BT:00:11:22:33:44:55</string>
+    <string name="save_manual">Simpan Target Manual</string>
+    <string name="series_label">Seri printer</string>
+    <string name="paper_label">Lebar kertas (untuk tes cetak)</string>
+    <string name="help_text">Aplikasi ini menerima perintah cetak dari web app Beesmillah (beesmillah.id) lewat tautan beesprint:// lalu mencetak langsung ke printer Epson via LAN, Bluetooth, atau USB. Pilih printer di bawah, lakukan Tes Cetak, lalu di web app pilih tipe printer “Aplikasi Bridge”.</string>
+</resources>
