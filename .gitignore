@@ -16,3 +16,6 @@ captures/
 app/libs/*.aar
 app/libs/*.jar
 app/src/main/jniLibs/
+
+# Materi SDK/sampel Epson apa pun jangan ikut repo (lisensi)
+ePOS_SDK_*/
