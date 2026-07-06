@@ -11,10 +11,14 @@ import java.util.Locale
  * status) adalah port 1:1 dari app/static/js/epos-print.js di repo web agar
  * hasil cetak identik dengan jalur ePOS-Print lama.
  *
- * Payload: { v, paperWidth: 58|80, cut, drawer, receipt: {
+ * Payload: { v, paperWidth: 58|80, cut, drawer, copies, receipt: {
  *   storeName, invoiceNo, dateStr, customer, cashier, method, status,
  *   items: [{name, qty, price, lineTotal}], hasAdjustments,
  *   subtotal, discount, adminFee, total, bayar, change, due } }
+ *
+ * copies (opsional, default 1, maks 5): jumlah lembar struk per transaksi —
+ * setingan "Jumlah Cetak Struk" warung di web. Tiap lembar dipotong sendiri;
+ * laci kas hanya dibuka sekali.
  */
 object ReceiptRenderer {
 
@@ -47,8 +51,17 @@ object ReceiptRenderer {
     private fun qtyStr(q: Double): String =
         if (q == Math.floor(q)) q.toLong().toString() else q.toString()
 
-    /** Isi perintah cetak ke [p]. Lempar Epos2Exception bila buffer gagal. */
+    /** Isi perintah cetak ke [p] — diulang sebanyak `copies` (1–5). Lempar
+     *  Epos2Exception bila buffer gagal. */
     fun render(p: Printer, payload: JSONObject) {
+        val copies = payload.optInt("copies", 1).coerceIn(1, 5)
+        repeat(copies) { i ->
+            renderOne(p, payload, openDrawer = i == 0)
+        }
+    }
+
+    /** Satu lembar struk. [openDrawer] hanya true di lembar pertama. */
+    private fun renderOne(p: Printer, payload: JSONObject, openDrawer: Boolean) {
         val r = payload.optJSONObject("receipt") ?: JSONObject()
         val w = lineWidth(payload.optInt("paperWidth", 80))
 
@@ -128,7 +141,7 @@ object ReceiptRenderer {
         p.addText("Supported by beesmillah.id\n")
 
         p.addFeedLine(2)
-        if (payload.optBoolean("drawer")) {
+        if (openDrawer && payload.optBoolean("drawer")) {
             p.addPulse(Printer.DRAWER_2PIN, Printer.PULSE_100)
         }
         if (payload.optBoolean("cut", true)) {

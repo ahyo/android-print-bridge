@@ -39,6 +39,7 @@ menutup diri — kasir kembali ke halaman web semula tanpa reload.
   "paperWidth": 80,
   "cut": true,
   "drawer": false,
+  "copies": 1,
   "receipt": {
     "storeName": "Warung Contoh",
     "invoiceNo": "INV-001",
@@ -66,6 +67,10 @@ Bentuk `receipt` identik dengan objek `data` yang dipakai `BzPrinter` di
 `app/static/js/epos-print.js` (repo web), sehingga layout struk sama persis
 dengan jalur ePOS-Print lama. Koneksi printer (IP/BT/USB) TIDAK dikirim dari
 web — diatur sekali di aplikasi ini.
+
+`copies` (opsional, default 1, maks 5) = setingan "Jumlah Cetak Struk" warung:
+struk dicetak berulang sebanyak itu, tiap lembar dipotong sendiri, laci kas
+hanya dibuka sekali di lembar pertama.
 
 ## Menyiapkan SDK Epson (wajib sebelum build)
 
