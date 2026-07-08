@@ -56,12 +56,14 @@ object ReceiptRenderer {
     fun render(p: Printer, payload: JSONObject) {
         val copies = payload.optInt("copies", 1).coerceIn(1, 5)
         repeat(copies) { i ->
-            renderOne(p, payload, openDrawer = i == 0)
+            renderOne(p, payload, openDrawer = i == 0, isCopy = i > 0)
         }
     }
 
-    /** Satu lembar struk. [openDrawer] hanya true di lembar pertama. */
-    private fun renderOne(p: Printer, payload: JSONObject, openDrawer: Boolean) {
+    /** Satu lembar struk. [openDrawer] hanya true di lembar pertama.
+     *  [isCopy] true untuk lembar ke-2 dst (setingan "Jumlah Cetak Struk")
+     *  — dicap "SALINAN" agar tidak tertukar dengan struk asli. */
+    private fun renderOne(p: Printer, payload: JSONObject, openDrawer: Boolean, isCopy: Boolean) {
         val r = payload.optJSONObject("receipt") ?: JSONObject()
         val w = lineWidth(payload.optInt("paperWidth", 80))
 
@@ -74,6 +76,13 @@ object ReceiptRenderer {
         r.optString("invoiceNo").takeIf { it.isNotEmpty() }?.let { p.addText(it + "\n") }
         p.addTextStyle(Printer.FALSE, Printer.FALSE, Printer.FALSE, Printer.COLOR_1)
         r.optString("dateStr").takeIf { it.isNotEmpty() }?.let { p.addText(it + "\n") }
+
+        // Lembar ke-2 dst dari setingan "Jumlah Cetak Struk" — bukan struk asli.
+        if (isCopy) {
+            p.addTextStyle(Printer.FALSE, Printer.FALSE, Printer.TRUE, Printer.COLOR_1)
+            p.addText("*** SALINAN ***\n")
+            p.addTextStyle(Printer.FALSE, Printer.FALSE, Printer.FALSE, Printer.COLOR_1)
+        }
 
         // Banner status (pengganti watermark di mode teks termal)
         val status = r.optString("status").lowercase()

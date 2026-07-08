@@ -70,7 +70,9 @@ web — diatur sekali di aplikasi ini.
 
 `copies` (opsional, default 1, maks 5) = setingan "Jumlah Cetak Struk" warung:
 struk dicetak berulang sebanyak itu, tiap lembar dipotong sendiri, laci kas
-hanya dibuka sekali di lembar pertama.
+hanya dibuka sekali di lembar pertama. Lembar ke-2 dst dicap `*** SALINAN ***`
+di bawah tanggal agar tidak tertukar dengan struk asli (sama seperti label
+"SALINAN" di struk web/browser).
 
 ## Menyiapkan SDK Epson (wajib sebelum build)
 
